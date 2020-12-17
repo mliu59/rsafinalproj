@@ -1,6 +1,6 @@
 #define MIC A1
-#define FFTFreq 7 
-#define listenlength 20
+#define FFTFreq 15 
+#define listenlength 8
 #define LOW_KICK 40
 #define HIGH_KICK 100
 #define BPM_UPPER 160
@@ -90,7 +90,7 @@ void loop() {
 void readMic() {
   for (int i = 0; i < 64; i++) {
     data[i] = analogRead(MIC);
-    delayMicroseconds(1000);
+    delayMicroseconds(250);
   }
 }
 
