@@ -1,3 +1,11 @@
+#define MIC A1
+#define FFTFreq 5 
+#define listenlength 20
+#define LOW_KICK 40
+#define HIGH_KICK 100
+#define BPM_UPPER 160
+#define BPM_LOWER 80
+
 int data[64] = {
 14, 30, 35, 34, 34, 40, 46, 45, 30, 4,  -26,  -48,  -55,  -49,  -37,
 -28,  -24,  -22,  -13,  6,  32, 55, 65, 57, 38, 17, 1,  -6, -11,  -19,  -34, 
@@ -10,7 +18,7 @@ byte sine_data [91] = {0,
 49,   53,   57,   62,   66,   70,   75,   79,   83,   87, 
 91,   96,   100,  104,  108,  112,  116,  120,  124,  127,  
 131,  135,  139,  143,  146,  150,  153,  157,  160,  164,  
-167,  171,  174,  177,  180,  183,  186,  189,  192,  195,       //Paste this at top of program
+167,  171,  174,  177,  180,  183,  186,  189,  192,  195,      
 198,  201,  204,  206,  209,  211,  214,  216,  219,  221,  
 223,  225,  227,  229,  231,  233,  235,  236,  238,  240,  
 241,  243,  244,  245,  246,  247,  248,  249,  250,  251,  
@@ -18,21 +26,71 @@ byte sine_data [91] = {0,
 
 float f_peaks[5]; // top 5 frequencies peaks in descending order
 //---------------------------------------------------------------------------//
-
+float peaks[FFTFreq * listenlength];
+unsigned long times[FFTFreq * listenlength];
+float bpm = 0;
 
 void setup() {
-  Serial.begin(9600);           
-}
+  Serial.begin(9600);
+  unsigned long FFTDelay = 1000 / FFTFreq;
+  for (int i = 0; i < FFTFreq * listenlength; i++) {
+    unsigned long start = millis();
+    readMic();
+    times[i] = millis();
+    FFT(data, 64, 1000);
+    peaks[i] = f_peaks[0];
+    Serial.println(peaks[i]);
+    while(millis() < start + FFTDelay) {}
+  }
 
+  int count = 0;
+  unsigned long last = 0;
+  unsigned long first = 0;
+  boolean kickDone = true;
+  for (int i = 0; i < FFTFreq * listenlength; i++) {
+    if (peaks[i] > LOW_KICK && peaks[i] < HIGH_KICK) {
+      if (kickDone) {
+        if (first != 0) {
+          first = times[i];
+        }
+        last = times[i];
+        count++;
+        kickDone = false;
+      }
+    } else {
+      kickDone = true;
+    }
+  }
+  Serial.print("Done counting - ");
+  Serial.print(count);
+  Serial.println("Kicks");
+
+  bpm = (last - first) * 1.0 / (count - 1);
+
+  Serial.print("BPM init - ");
+  Serial.println(bpm);
+
+  while (bpm < BPM_LOWER && bpm > BPM_UPPER) {
+    if (bpm < BPM_LOWER) {
+      bpm = bpm * 2;
+    } else if (bpm > BPM_UPPER) {
+      bpm = bpm / 2;
+    }
+  }
+
+  Serial.println("BPM: " + String(bpm));
+  
+}
         
-void loop() {
-  FFT(data,64,100);        //to get top five value of frequencies of X having 64 sample at 100Hz sampling
-  Serial.println(f_peaks[0]);
-  Serial.println(f_peaks[1]);
-  while(1){};           
+void loop() {           
 }
 
-
+void readMic() {
+  for (int i = 0; i < 64; i++) {
+    data[i] = analogRead(MIC);
+    delayMicroseconds(1000);
+  }
+}
 
 //-----------------------------FFT Function----------------------------------------------//
 
