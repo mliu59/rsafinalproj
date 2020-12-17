@@ -1,5 +1,5 @@
 #define MIC A1
-#define FFTFreq 5 
+#define FFTFreq 7 
 #define listenlength 20
 #define LOW_KICK 40
 #define HIGH_KICK 100
@@ -37,8 +37,8 @@ void setup() {
     unsigned long start = millis();
     readMic();
     times[i] = millis();
-    FFT(data, 64, 1000);
-    peaks[i] = f_peaks[0];
+    FFT(data, 64, 914);
+    peaks[i] = minPeak();
     Serial.println(peaks[i]);
     while(millis() < start + FFTDelay) {}
   }
@@ -72,7 +72,7 @@ void setup() {
   Serial.print("BPM init - ");
   Serial.println(bpm);
 
-  while (bpm < BPM_LOWER && bpm > BPM_UPPER) {
+  while (bpm < BPM_LOWER || bpm > BPM_UPPER) {
     if (bpm < BPM_LOWER) {
       bpm = bpm * 2;
     } else if (bpm > BPM_UPPER) {
@@ -92,6 +92,16 @@ void readMic() {
     data[i] = analogRead(MIC);
     delayMicroseconds(1000);
   }
+}
+
+float minPeak() {
+  float minPeak = 5000;
+  for (int i = 0; i < 5; i++) {
+    if (f_peaks[i] < minPeak) {
+      minPeak = f_peaks[i];
+    }
+  }
+  return minPeak;
 }
 
 //-----------------------------FFT Function----------------------------------------------//
