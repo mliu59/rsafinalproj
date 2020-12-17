@@ -32,56 +32,17 @@ float bpm = 0;
 
 void setup() {
   Serial.begin(9600);
-  unsigned long FFTDelay = 1000 / FFTFreq;
-  for (int i = 0; i < FFTFreq * listenlength; i++) {
-    unsigned long start = millis();
-    readMic();
-    times[i] = millis();
-    FFT(data, 64, 1000);
-    peaks[i] = f_peaks[0];
-    Serial.println(peaks[i]);
-    while(millis() < start + FFTDelay) {}
-  }
+  unsigned long a = 0;
+  unsigned long b = 0;
+  a = millis();
+  readMic();
+  b = millis();
+  Serial.println(b - a);
 
-  int count = 0;
-  unsigned long last = 0;
-  unsigned long first = 0;
-  boolean kickDone = true;
-  for (int i = 0; i < FFTFreq * listenlength; i++) {
-    if (peaks[i] > LOW_KICK && peaks[i] < HIGH_KICK) {
-      if (kickDone) {
-        if (first != 0) {
-          first = times[i];
-        }
-        last = times[i];
-        count++;
-        kickDone = false;
-      }
-    } else {
-      kickDone = true;
-    }
-  }
-  Serial.print("Done counting - ");
-  Serial.print(count);
-  Serial.println("Kicks");
-
-  bpm = (last - first) * 1.0 / (count - 1);
-  bpm = bpm / 1000;
-  bpm = 60.0 / bpm; 
-
-  Serial.print("BPM init - ");
-  Serial.println(bpm);
-
-  while (bpm < BPM_LOWER && bpm > BPM_UPPER) {
-    if (bpm < BPM_LOWER) {
-      bpm = bpm * 2;
-    } else if (bpm > BPM_UPPER) {
-      bpm = bpm / 2;
-    }
-  }
-
-  Serial.println("BPM: " + String(bpm));
-  
+  a = millis();
+  FFT(data, 64, 1000);
+  b = millis();
+  Serial.println(b - a);
 }
         
 void loop() {           
