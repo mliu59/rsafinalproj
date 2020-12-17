@@ -24,7 +24,7 @@ byte sine_data [91] = {0,
 241,  243,  244,  245,  246,  247,  248,  249,  250,  251,  
 252,  253,  253,  254,  254,  254,  255,  255,  255,  255};
 
-float f_peaks[5]; // top 5 frequencies peaks in descending order
+float f_peaks[5] = {0, 0, 0, 0, 0}; // top 5 frequencies peaks in descending order
 //---------------------------------------------------------------------------//
 float peaks[FFTFreq * listenlength];
 unsigned long times[FFTFreq * listenlength];
@@ -97,7 +97,7 @@ void readMic() {
 float minPeak() {
   float minPeak = 5000;
   for (int i = 0; i < 5; i++) {
-    if (f_peaks[i] < minPeak) {
+    if (f_peaks[i] < minPeak && f_peaks[i] > 0) {
       minPeak = f_peaks[i];
     }
   }
