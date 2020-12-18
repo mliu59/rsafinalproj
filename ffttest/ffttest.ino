@@ -26,26 +26,24 @@ byte sine_data [91] = {0,
 
 float f_peaks[5]; // top 5 frequencies peaks in descending order
 //---------------------------------------------------------------------------//
-float peaks[FFTFreq * listenlength];
-unsigned long times[FFTFreq * listenlength];
+//float peaks[FFTFreq * listenlength];
+//unsigned long times[FFTFreq * listenlength];
 float bpm = 0;
 
 void setup() {
   Serial.begin(9600);
-  unsigned long a = 0;
-  unsigned long b = 0;
-  a = millis();
-  readMic();
-  b = millis();
-  Serial.println(b - a);
-
-  a = millis();
-  FFT(data, 64, 1000);
-  b = millis();
-  Serial.println(b - a);
 }
         
-void loop() {           
+void loop() {
+  unsigned long initT = millis();
+  readMic();
+  FFT(data, 64, 914);
+  for (int i = 0; i < 5; i++) {
+    Serial.print(f_peaks[i]);
+    Serial.print(", ");           
+  }
+  Serial.println("");
+  while (millis() < initT + (1000 / FFTFreq)) {}
 }
 
 void readMic() {
