@@ -1,4 +1,4 @@
-#define sampleDelay 50
+#define sampleDelay 25
 
 
 void setup() {
