@@ -17,8 +17,8 @@
 #define calibrationTimeSec 10 //the duration of the calibration periods, both ambient and max volume
 #define micPin A1 //pin connected to the mic output
 #define servoPin 9 //pin connected to the continuous rotation servo signal output
-#define samplePeriodMS 25 //the period of each sample read from the microphone, 40Hz
-#define refreshPeriodMS 2000 //the length of the period in which volume levels are read and updated, 0.5Hz
+#define samplePeriodMS 5 //the period of each sample read from the microphone, 40Hz
+#define refreshPeriodMS 500 //the length of the period in which volume levels are read and updated, 0.5Hz
 #define calibrate false //this variable designates whether or not a calibration will be conducted at the beginning.
 #define PIN 6 // Data pin for LED
 
@@ -32,6 +32,8 @@ Adafruit_NeoMatrix matrix = Adafruit_NeoMatrix(8, 8, PIN, // 8x8 matrix
   NEO_MATRIX_TOP     + NEO_MATRIX_LEFT + // TOP or BOTTOM ; LEFT or RIGHT 
   NEO_MATRIX_COLUMNS + NEO_MATRIX_ZIGZAG, // ROWS or COLUMNS ; ZIGZAG
   NEO_GRB            + NEO_KHZ800);
+
+boolean flip = true;
 
 void setup() {
   Serial.begin(9600);
@@ -53,15 +55,30 @@ void setup() {
 void loop() {
   unsigned long initT = millis();
   int diff = 0;
+  int numVals = 5;
+  int maxDiffs[numVals];
+  for (int i = 0; i < numVals; i++) {
+    maxDiffs[i] = 0;
+  }
   while (millis() < initT + refreshPeriodMS) {
     int a = readMic() - ambient;
     if (a < 0) {
       a = a * -1;
     }
-    if (a > diff) {
-      diff = a;
+    for (int i = 0; i < numVals; i++) {
+      if (a > maxDiffs[i]) {
+        for (int j = numVals - 2; j >= i; j--) {
+          maxDiffs[j + 1] = maxDiffs[j];
+        }
+        maxDiffs[i] = a; 
+        break;
+      }
     }
   }
+  for (int i = 0; i < numVals; i++) {
+    diff += maxDiffs[i];
+  }
+  diff = diff / numVals;
   volume = map(diff, 0, maxDiff, 0, 10);
   if (volume > 10) { volume = 10; }
   Serial.println(volume);
@@ -69,15 +86,50 @@ void loop() {
     servo.write(0);
   }
 
-  drawLogo(volume);
-  delay(500);
-  
-  crossFade(off, white, 50, 10 - volume);
-  delay(500);
-
-  colorWipe(red, 50 - (volume * 5));
-  delay(500);
-  
+  switch(volume) {
+    case 0:
+      colorWipe(off, 0);
+      break;
+    case 1:
+      colorWipe(off, 0);
+      break;
+    case 2:
+      //colorWipe(two, 0);
+      crossFade(one, two, 5, 10);
+      break;
+    case 3:
+      //colorWipe(three, 0);
+      crossFade(two, three, 5, 10);
+      break;
+    case 4:
+      //colorWipe(four, 0);
+      crossFade(three, four, 5, 10);
+      break;
+    case 5:
+      //colorWipe(five, 0);
+      crossFade(four, five, 5, 10);
+      break;
+    case 6:
+      //colorWipe(six, 0);
+      crossFade(five, six, 5, 10);
+      break;
+    case 7:
+      //colorWipe(seven, 0);
+      crossFade(six, seven, 5, 10);
+      break;
+    case 8:
+      //colorWipe(eight, 0);
+      crossFade(seven, eight, 5, 10);
+      break;
+    case 9:
+      //colorWipe(nine, 0);
+      crossFade(eight, nine, 5, 10);
+      break;
+    case 10:
+      //colorWipe(red, 0);
+      crossFade(nine, red, 5, 10);
+      break;
+  }
 }
 
 
@@ -105,7 +157,11 @@ void calibMax() {
   while (millis() < initT + calibrationTimeSec * 1000) {
     int diff = abs(readMic() - ambient);
     if (diff > maxDiff) {
-      maxDiff = diff;
+      if (diff > 50) {
+        maxDiff = 50;
+      } else {
+        maxDiff = diff;
+      }
     }
   }
   Serial.print("Max volume calibration done, max diff: ");
@@ -118,6 +174,8 @@ int readMic() {
   while(millis() < initT + samplePeriodMS){};
   return val;
 }
+
+
 
 void colorWipe(RGB color, uint8_t wait) {
   for(uint16_t row=0; row < 8; row++) {
